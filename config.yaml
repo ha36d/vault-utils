@@ -1,7 +1,7 @@
 verbose: false
 srcaddr: "http://127.0.0.1:8200"
 srctoken: "someToken"
-dstaddr: http://127.0.0.1:8202
+dstaddr: "http://127.0.0.1:8202"
 dsttoken: "someToken"
 dstengine: "secret"
 srcengine: ["secret"]

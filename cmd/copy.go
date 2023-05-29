@@ -17,8 +17,8 @@ import (
 // copyCmd represents the copy command
 var copyCmd = &cobra.Command{
 	Use:   "copy",
-	Short: "Copy vault kv data",
-	Long:  `Copy vault kv data`,
+	Short: "Copy kv data from one vault to another",
+	Long:  `Copy kv data from one vault to another`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		srcaddr := viper.GetString("srcaddr")
@@ -129,17 +129,17 @@ func Keys(m map[string]interface{}) (keys []string) {
 }
 func init() {
 
-	copyCmd.Flags().StringP("sourceaddress", "s", "", "Source vault address to read from")
-	viper.BindPFlag("sourceaddress", copyCmd.Flags().Lookup("sourceaddress"))
+	copyCmd.Flags().StringP("srcaddr", "s", "", "Source vault address to read from")
+	viper.BindPFlag("srcaddr", copyCmd.Flags().Lookup("srcaddr"))
 	copyCmd.Flags().StringP("dstaddr", "d", "", "Destination vault address to write to")
 	viper.BindPFlag("dstaddr", copyCmd.Flags().Lookup("dstaddr"))
-	copyCmd.Flags().StringP("stctoken", "t", "", "Source vault token to write to")
-	viper.BindPFlag("stctoken", copyCmd.Flags().Lookup("stctoken"))
+	copyCmd.Flags().StringP("srctoken", "t", "", "Source vault token to read from")
+	viper.BindPFlag("srctoken", copyCmd.Flags().Lookup("srctoken"))
 	copyCmd.Flags().StringP("dsttoken", "k", "", "Destination vault token to write to")
 	viper.BindPFlag("dsttoken", copyCmd.Flags().Lookup("dsttoken"))
-	copyCmd.Flags().StringP("srcengine", "e", "", "Source vault engine to write to")
+	copyCmd.Flags().StringP("srcengine", "e", "", "Source vault kv engines to read from")
 	viper.BindPFlag("srcengine", copyCmd.Flags().Lookup("srcengine"))
-	copyCmd.Flags().StringP("dstengine", "f", "", "Destination vault engine to write to")
+	copyCmd.Flags().StringP("dstengine", "f", "", "Destination vault kv engines to write to")
 	viper.BindPFlag("dstengine", copyCmd.Flags().Lookup("dstengine"))
 
 	rootCmd.AddCommand(copyCmd)
