@@ -22,11 +22,8 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-    
-    # Setup Go
-    - name: Setup Go
-      uses: actions/setup-go@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: '1.18.0' # The Go version to download (if necessary) and use.
     
@@ -34,7 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         go version
-        go get -u golang.org/x/lint/golint
+        go install golang.org/x/lint/golint
         
     # Run build of the application
     - name: Run build
@@ -43,6 +40,7 @@ jobs:
     # Run vet & lint on the code
     - name: Run vet & lint
       run: |
+        export PATH=$PATH:$(go env GOPATH)/bin
         go vet .
         golint .
     
