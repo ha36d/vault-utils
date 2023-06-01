@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"context"
 
@@ -12,7 +11,12 @@ import (
 	"github.com/hashicorp/vault-client-go/schema"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/ha36d/vault-utils/pkg/utils"
+	"github.com/ha36d/vault-utils/pkg/vaultutility"
 )
+
+type codeReturn func()
 
 // copyCmd represents the copy command
 var copyCmd = &cobra.Command{
@@ -22,15 +26,11 @@ var copyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		srcaddr := viper.GetString("srcaddr")
-		dstaddr := viper.GetString("dstaddr")
 		srctoken := viper.GetString("srctoken")
-		dsttoken := viper.GetString("dsttoken")
 		srcengine := viper.GetString("srcengine")
-		dstengine := viper.GetString("dstengine")
 		verbose = viper.GetBool("verbose")
 
-		source := VaultClient(srcaddr, srctoken)
-		destination := VaultClient(dstaddr, dsttoken)
+		source := vaultutility.VaultClient(srcaddr, srctoken)
 
 		ctx := context.Background()
 
@@ -41,8 +41,8 @@ var copyCmd = &cobra.Command{
 
 		for engine, property := range resp.Data {
 			engineType := property.(map[string]interface{})
-			if engineType["type"] == "kv" && contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/")) {
-				loopTree(source, destination, ctx, engine, dstengine, "/")
+			if engineType["type"] == "kv" && utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/")) {
+				vaultutility.LoopTree(source, ctx, engine, "/", copySecret)
 			}
 		}
 
@@ -51,82 +51,27 @@ var copyCmd = &cobra.Command{
 	},
 }
 
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
+func copySecret(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
 
-	return false
-}
+	dstaddr := viper.GetString("dstaddr")
+	dsttoken := viper.GetString("dsttoken")
+	dstengine := viper.GetString("dstengine")
+	verbose = viper.GetBool("verbose")
+	destination := vaultutility.VaultClient(dstaddr, dsttoken)
 
-func loopTree(source *vault.Client, destination *vault.Client, ctx context.Context, engine string, dstengine string, path string) {
+	for key, value := range subkeys {
 
-	res := strings.HasSuffix(path, "/")
-
-	if res {
-		keys, err := source.List(ctx, fmt.Sprintf("%s/metadata/%s", engine, path))
+		_, err := destination.Secrets.KvV2Write(ctx, fmt.Sprintf("%s%s", path, secret), schema.KvV2WriteRequest{
+			Data: map[string]any{
+				key: value,
+			},
+		}, vault.WithMountPath(dstengine))
 		if err != nil {
 			log.Fatal(err)
 		}
-		for _, key := range Keys(keys.Data) {
-			res := strings.HasSuffix(key, "/")
-			if res {
-				loopTree(source, destination, ctx, engine, dstengine, fmt.Sprintf("%s%s", path, key))
-			} else {
-				subkeys, err := source.Secrets.KvV2Read(ctx, fmt.Sprintf("%s%s", path, key), vault.WithMountPath(engine))
-				if err != nil {
-					log.Fatal(err)
-				}
-				for key, value := range subkeys.Data.Data {
-					if verbose {
-						log.Println("writing secret:", fmt.Sprintf("%s%s%s", engine, path, key))
-					}
-
-					_, err = destination.Secrets.KvV2Write(ctx, fmt.Sprintf("%s%s", path, key), schema.KvV2WriteRequest{
-						Data: map[string]any{
-							key: value,
-						},
-					}, vault.WithMountPath(dstengine))
-					if err != nil {
-						log.Fatal(err)
-					}
-					if verbose {
-						log.Println("secret key was written successfully")
-					}
-				}
-			}
-		}
 	}
-
 }
 
-func VaultClient(address string, token string) *vault.Client {
-	// prepare a client with the given base address
-	client, err := vault.New(
-		vault.WithAddress(address),
-		vault.WithRequestTimeout(30*time.Second),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// authenticate with a root token (insecure)
-	if err := client.SetToken(token); err != nil {
-		log.Fatal(err)
-	}
-
-	return client
-}
-
-func Keys(m map[string]interface{}) (keys []string) {
-	s := make([]string, 0)
-	for _, v := range m["keys"].([]interface{}) {
-		s = append(s, fmt.Sprint(v))
-	}
-	return s
-}
 func init() {
 
 	copyCmd.Flags().StringP("srcaddr", "s", "", "Source vault address to read from")
