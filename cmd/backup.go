@@ -30,7 +30,11 @@ var backupCmd = &cobra.Command{
 
 		verbose = viper.GetBool("verbose")
 
-		source := vaultutility.VaultClient(srcaddr, srctoken)
+		source, err := vaultutility.VaultClient(srcaddr, srctoken)
+
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		ctx := context.Background()
 
@@ -66,7 +70,7 @@ var backupCmd = &cobra.Command{
 	},
 }
 
-func saveSecretToFile(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
+func saveSecretToKv(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
 
 	verbose = viper.GetBool("verbose")
 
@@ -94,13 +98,7 @@ func saveSecretToFile(ctx context.Context, engine string, path string, secret st
 
 func init() {
 
-	backupCmd.Flags().StringP("addr", "s", "", "Source vault address to read from")
-	viper.BindPFlag("addr", backupCmd.Flags().Lookup("addr"))
-	backupCmd.Flags().StringP("token", "t", "", "Source vault token to read from")
-	viper.BindPFlag("token", backupCmd.Flags().Lookup("token"))
-	backupCmd.Flags().StringP("engine", "e", "", "Source vault kv engines to read from")
-	viper.BindPFlag("engine", backupCmd.Flags().Lookup("engine"))
-	backupCmd.Flags().StringP("backup", "b", "", "Backup file path")
+	backupCmd.Flags().StringP("backup", "f", "", "Backup file path")
 	viper.BindPFlag("backup", backupCmd.Flags().Lookup("backup"))
 
 	rootCmd.AddCommand(backupCmd)

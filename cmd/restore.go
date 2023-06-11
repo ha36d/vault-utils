@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"context"
@@ -30,7 +31,11 @@ var restoreCmd = &cobra.Command{
 
 		verbose = viper.GetBool("verbose")
 
-		source := vaultutility.VaultClient(srcaddr, srctoken)
+		source, err := vaultutility.VaultClient(srcaddr, srctoken)
+
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		ctx := context.Background()
 
@@ -43,6 +48,13 @@ var restoreCmd = &cobra.Command{
 		if err != nil {
 			log.Println(err)
 		}
+
+		myFile, err := os.Open(backup)
+		if err != nil {
+			log.Fatalf("unable to read file: %v", err)
+		}
+		defer myFile.Close()
+
 		targz.Untar(fmt.Sprintf("%s/%s", osPath, srcengine), myFile)
 		err = os.RemoveAll(fmt.Sprintf("%s/%s", osPath, srcengine))
 		if err != nil {
@@ -56,17 +68,25 @@ var restoreCmd = &cobra.Command{
 			}
 		}
 
-		myFile, err := os.Create(backup)
-		if err != nil {
-			panic(err)
-		}
-
 		log.Println("Job Finished!")
 
 	},
 }
 
 func saveSecretToFile(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
+
+	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+		fmt.Printf("File Name: %s\n", info.Name())
+		return nil
+	})
+
+	//  content, err := ioutil.ReadFile("./config.json")
+	//
+	// var payload Data
+	// err = json.Unmarshal(content, &payload)
 
 	verbose = viper.GetBool("verbose")
 
@@ -94,14 +114,8 @@ func saveSecretToFile(ctx context.Context, engine string, path string, secret st
 
 func init() {
 
-	restoreCmd.Flags().StringP("addr", "s", "", "Source vault address to read from")
-	viper.BindPFlag("addr", restoreCmd.Flags().Lookup("addr"))
-	restoreCmd.Flags().StringP("token", "t", "", "Source vault token to read from")
-	viper.BindPFlag("token", restoreCmd.Flags().Lookup("token"))
-	restoreCmd.Flags().StringP("engine", "e", "", "Source vault kv engines to read from")
-	viper.BindPFlag("engine", restoreCmd.Flags().Lookup("engine"))
-	restoreCmd.Flags().StringP("backup", "b", "", "Backup file path")
-	viper.BindPFlag("backup", restoreCmd.Flags().Lookup("backup"))
+	restoreCmd.Flags().StringP("restore", "f", "", "Backup file path")
+	viper.BindPFlag("restore", restoreCmd.Flags().Lookup("restore"))
 
 	rootCmd.AddCommand(backupCmd)
 }

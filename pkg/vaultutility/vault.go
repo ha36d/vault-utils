@@ -10,22 +10,18 @@ import (
 	"github.com/hashicorp/vault-client-go"
 )
 
-func VaultClient(address string, token string) *vault.Client {
+func VaultClient(address string, token string) (*vault.Client, error) {
 	// prepare a client with the given base address
 	client, err := vault.New(
 		vault.WithAddress(address),
 		vault.WithRequestTimeout(30*time.Second),
 	)
-	if err != nil {
-		log.Fatal(err)
+	if err == nil {
+		// authenticate with a root token (insecure)
+		err = client.SetToken(token)
 	}
 
-	// authenticate with a root token (insecure)
-	if err := client.SetToken(token); err != nil {
-		log.Fatal(err)
-	}
-
-	return client
+	return client, err
 }
 
 func LoopTree(source *vault.Client, ctx context.Context, engine string, path string, f func(context.Context, string, string, string, map[string]interface{})) {
