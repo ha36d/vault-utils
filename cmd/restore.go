@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"context"
@@ -16,11 +17,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-// backupCmd represents the copy command
-var backupCmd = &cobra.Command{
-	Use:   "backup",
-	Short: "Backup kv data to tar.gz",
-	Long:  `Backup kv data to tar.gz`,
+// restoreCmd represents the copy command
+var restoreCmd = &cobra.Command{
+	Use:   "restore",
+	Short: "Restore tar.gz to kv data",
+	Long:  `Restore tar.gz to kv data`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		srcaddr := viper.GetString("addr")
@@ -48,27 +49,23 @@ var backupCmd = &cobra.Command{
 			log.Println(err)
 		}
 
-		myFile, err := os.Create(backup)
+		myFile, err := os.Open(backup)
 		if err != nil {
-			panic(err)
+			log.Fatalf("unable to read file: %v", err)
 		}
+		defer myFile.Close()
 
-		if err := os.MkdirAll(fmt.Sprintf("%s/%s", osPath, "vault-backup"), 0700); err != nil {
+		targz.Untar(fmt.Sprintf("%s/%s", osPath, srcengine), myFile)
+		err = os.RemoveAll(fmt.Sprintf("%s/%s", osPath, srcengine))
+		if err != nil {
 			log.Fatal(err)
 		}
-		defer os.RemoveAll(fmt.Sprintf("%s/%s", osPath, "vault-backup"))
 
 		for engine, property := range resp.Data {
 			engineType := property.(map[string]interface{})
-
-			if engineType["type"] == "kv" && (srcengine == "" || utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/"))) {
+			if engineType["type"] == "kv" && utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/")) {
 				vaultutility.LoopTree(source, ctx, engine, "/", saveSecretToFile)
 			}
-		}
-
-		targz.Tar(fmt.Sprintf("%s/%s", osPath, "vault-backup"), myFile)
-		if err != nil {
-			log.Fatal(err)
 		}
 
 		log.Println("Job Finished!")
@@ -76,7 +73,20 @@ var backupCmd = &cobra.Command{
 	},
 }
 
-func saveSecretToFile(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
+func saveSecretToKv(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
+
+	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+		fmt.Printf("File Name: %s\n", info.Name())
+		return nil
+	})
+
+	//  content, err := ioutil.ReadFile("./config.json")
+	//
+	// var payload Data
+	// err = json.Unmarshal(content, &payload)
 
 	verbose = viper.GetBool("verbose")
 
@@ -93,10 +103,10 @@ func saveSecretToFile(ctx context.Context, engine string, path string, secret st
 	if err != nil {
 		log.Println(err)
 	}
-	if err := os.MkdirAll(fmt.Sprintf("%s/%s/%s%s", osPath, "vault-backup", engine, path), 0700); err != nil {
+	if err := os.MkdirAll(fmt.Sprintf("%s/%s%s", osPath, engine, path), 0700); err != nil {
 		log.Fatal(err)
 	}
-	err = os.WriteFile(fmt.Sprintf("%s/%s/%s%s%s.json", osPath, "vault-backup", engine, path, secret), body, 0400)
+	err = os.WriteFile(fmt.Sprintf("%s/%s%s%s.json", osPath, engine, path, secret), body, 0400)
 	if err != nil {
 		log.Println(err)
 	}
@@ -104,8 +114,8 @@ func saveSecretToFile(ctx context.Context, engine string, path string, secret st
 
 func init() {
 
-	backupCmd.Flags().StringP("backup", "f", "", "Backup file path")
-	viper.BindPFlag("backup", backupCmd.Flags().Lookup("backup"))
+	restoreCmd.Flags().StringP("restore", "f", "", "Backup file path")
+	viper.BindPFlag("restore", restoreCmd.Flags().Lookup("restore"))
 
 	rootCmd.AddCommand(backupCmd)
 }

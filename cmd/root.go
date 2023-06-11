@@ -32,6 +32,13 @@ func init() {
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.SetDefault("verbose", false)
 
+	rootCmd.PersistentFlags().StringP("addr", "s", "", "Vault address")
+	viper.BindPFlag("addr", rootCmd.PersistentFlags().Lookup("addr"))
+	rootCmd.PersistentFlags().StringP("token", "t", "", "Vault token")
+	viper.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token"))
+	rootCmd.PersistentFlags().StringP("engine", "e", "", "Vault kv comma separated engine names")
+	viper.BindPFlag("engine", rootCmd.PersistentFlags().Lookup("engine"))
+
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -25,12 +25,16 @@ var copyCmd = &cobra.Command{
 	Long:  `Copy kv data from one vault to another`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		srcaddr := viper.GetString("srcaddr")
-		srctoken := viper.GetString("srctoken")
-		srcengine := viper.GetString("srcengine")
+		srcaddr := viper.GetString("addr")
+		srctoken := viper.GetString("token")
+		srcengine := viper.GetString("engine")
 		verbose = viper.GetBool("verbose")
 
-		source := vaultutility.VaultClient(srcaddr, srctoken)
+		source, err := vaultutility.VaultClient(srcaddr, srctoken)
+
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		ctx := context.Background()
 
@@ -57,7 +61,11 @@ func copySecret(ctx context.Context, engine string, path string, secret string, 
 	dsttoken := viper.GetString("dsttoken")
 	dstengine := viper.GetString("dstengine")
 	verbose = viper.GetBool("verbose")
-	destination := vaultutility.VaultClient(dstaddr, dsttoken)
+	destination, err := vaultutility.VaultClient(dstaddr, dsttoken)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for key, value := range subkeys {
 
@@ -74,16 +82,10 @@ func copySecret(ctx context.Context, engine string, path string, secret string, 
 
 func init() {
 
-	copyCmd.Flags().StringP("srcaddr", "s", "", "Source vault address to read from")
-	viper.BindPFlag("srcaddr", copyCmd.Flags().Lookup("srcaddr"))
 	copyCmd.Flags().StringP("dstaddr", "d", "", "Destination vault address to write to")
 	viper.BindPFlag("dstaddr", copyCmd.Flags().Lookup("dstaddr"))
-	copyCmd.Flags().StringP("srctoken", "t", "", "Source vault token to read from")
-	viper.BindPFlag("srctoken", copyCmd.Flags().Lookup("srctoken"))
 	copyCmd.Flags().StringP("dsttoken", "k", "", "Destination vault token to write to")
 	viper.BindPFlag("dsttoken", copyCmd.Flags().Lookup("dsttoken"))
-	copyCmd.Flags().StringP("srcengine", "e", "", "Source vault kv engines to read from")
-	viper.BindPFlag("srcengine", copyCmd.Flags().Lookup("srcengine"))
 	copyCmd.Flags().StringP("dstengine", "f", "", "Destination vault kv engines to write to")
 	viper.BindPFlag("dstengine", copyCmd.Flags().Lookup("dstengine"))
 
