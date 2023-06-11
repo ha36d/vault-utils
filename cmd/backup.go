@@ -43,11 +43,9 @@ var backupCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		for engine, property := range resp.Data {
-			engineType := property.(map[string]interface{})
-			if engineType["type"] == "kv" && utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/")) {
-				vaultutility.LoopTree(source, ctx, engine, "/", saveSecretToFile)
-			}
+		osPath, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
 		}
 
 		myFile, err := os.Create(backup)
@@ -55,12 +53,20 @@ var backupCmd = &cobra.Command{
 			panic(err)
 		}
 
-		osPath, err := os.Getwd()
-		if err != nil {
-			log.Println(err)
+		if err := os.MkdirAll(fmt.Sprintf("%s/%s", osPath, "vault-backup"), 0700); err != nil {
+			log.Fatal(err)
 		}
-		targz.Tar(fmt.Sprintf("%s/%s", osPath, srcengine), myFile)
-		err = os.RemoveAll(fmt.Sprintf("%s/%s", osPath, srcengine))
+		defer os.RemoveAll(fmt.Sprintf("%s/%s", osPath, "vault-backup"))
+
+		for engine, property := range resp.Data {
+			engineType := property.(map[string]interface{})
+
+			if engineType["type"] == "kv" && (srcengine == "" || utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/"))) {
+				vaultutility.LoopTree(source, ctx, engine, "/", saveSecretToFile)
+			}
+		}
+
+		targz.Tar(fmt.Sprintf("%s/%s", osPath, "vault-backup"), myFile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -70,7 +76,7 @@ var backupCmd = &cobra.Command{
 	},
 }
 
-func saveSecretToKv(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
+func saveSecretToFile(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
 
 	verbose = viper.GetBool("verbose")
 
@@ -87,10 +93,10 @@ func saveSecretToKv(ctx context.Context, engine string, path string, secret stri
 	if err != nil {
 		log.Println(err)
 	}
-	if err := os.MkdirAll(fmt.Sprintf("%s/%s%s", osPath, engine, path), 0700); err != nil {
+	if err := os.MkdirAll(fmt.Sprintf("%s/%s/%s%s", osPath, "vault-backup", engine, path), 0700); err != nil {
 		log.Fatal(err)
 	}
-	err = os.WriteFile(fmt.Sprintf("%s/%s%s%s.json", osPath, engine, path, secret), body, 0400)
+	err = os.WriteFile(fmt.Sprintf("%s/%s/%s%s%s.json", osPath, "vault-backup", engine, path, secret), body, 0400)
 	if err != nil {
 		log.Println(err)
 	}

@@ -73,7 +73,7 @@ var restoreCmd = &cobra.Command{
 	},
 }
 
-func saveSecretToFile(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
+func saveSecretToKv(ctx context.Context, engine string, path string, secret string, subkeys map[string]interface{}) {
 
 	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
