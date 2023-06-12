@@ -66,9 +66,8 @@ var backupCmd = &cobra.Command{
 			}
 		}
 
-		targz.Tar(fmt.Sprintf("%s/%s", osPath, "vault-backup"), myFile)
-		if err != nil {
-			log.Fatal(err)
+		if err = targz.Tar(fmt.Sprintf("%s/%s", osPath, "vault-backup"), myFile); err != nil {
+			log.Fatalf("unable to tar the file: %v", err)
 		}
 
 		log.Println("Job Finished!")

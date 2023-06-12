@@ -4,10 +4,13 @@
 Yet Another Utility for Vault. Actions supported:
     
 - Copy from one Vault to another
+- Backup from one Vault to tar.gz
+- Restore from tar.gz to Vault
 
 
 ## Documentation
 
+### Copy
 This can used for copy the kv data from one Vault to another:
 
 ```
@@ -19,19 +22,19 @@ Flags:
   -f, --dstengine string   Destination vault kv engines to write to
   -k, --dsttoken string    Destination vault token to write to
   -h, --help               help for copy
-  -s, --srcaddr string     Source vault address to read from
-  -e, --srcengine string   Source vault kv engines to read from
-  -t, --srctoken string    Source vault token to read from
 
 Global Flags:
+  -s, --addr string     Vault address
   -c, --config string   config file (default is $HOME/.vault-utils.yaml)
+  -e, --engine string   Vault kv comma separated engine names
+  -t, --token string    Vault token
   -v, --verbose         verbosity
 ```
 
 Example:
 
 ```
-./vault-utils copy --srcengine "kv,secret" --dstengine "secret" --srcaddr "http://127.0.0.1:8200" --srctoken "someToken" --dstaddr "http://127.0.0.1:8202" --dsttoken "someToken" -v
+./vault-utils copy --addr "http://127.0.0.1:8200" --srtoken "someToken" --engine "kv,secret" --dstaddr "http://127.0.0.1:8202" --dsttoken "someToken" --dstengine "secret" -v
 2023/05/29 20:07:51 No config file found! Counting on flags!
 Using config:
 --- Configuration ---
@@ -54,6 +57,38 @@ Instead of flags, it is possible to use the config file:
 ```
 ./vault-utils copy -c config.yaml
 ```
+
+### Backup
+This can used for copy the kv data from one Vault to another:
+
+```
+Usage:
+  vault-utils backup [flags]
+
+Flags:
+  -f, --backup string   Backup file path
+  -h, --help            help for backup
+
+Global Flags:
+  -s, --addr string     Vault address
+  -c, --config string   config file (default is $HOME/.vault-utils.yaml)
+  -e, --engine string   Vault kv comma separated engine names
+  -t, --token string    Vault token
+  -v, --verbose         verbosity
+```
+
+Example:
+
+```
+./vault-utils backup --addr "http://127.0.0.1:8200" --token "someToken" -f some.tar.gz -v
+2023/05/29 20:07:51 No config file found! Counting on flags!
+2023/05/29 20:07:51 Job Finished!
+```
+
+Instead of flags, it is possible to use the config file:
+```
+./vault-utils backup -c config.yaml
+```
 ## Installation
 
 From the [release page](https://github.com/ha36d/vault-utils/releases/), find the version suitable for your env, and run it shell.
@@ -61,7 +96,45 @@ From the [release page](https://github.com/ha36d/vault-utils/releases/), find th
 ```bash
   ./vault-utils
 ```
-    
+
+### Restore
+This can used for copy the kv data from one Vault to another:
+
+```
+Usage:
+  vault-utils restore [flags]
+
+Flags:
+  -f, --backup string   Backup file path
+  -h, --help            help for restore
+
+Global Flags:
+  -s, --addr string     Vault address
+  -c, --config string   config file (default is $HOME/.vault-utils.yaml)
+  -e, --engine string   Vault kv comma separated engine names
+  -t, --token string    Vault token
+  -v, --verbose         verbosity
+```
+
+Example:
+
+```
+./vault-utils restore --addr "http://127.0.0.1:8200" --token "someToken" -f some.tar.gz -v
+2023/05/29 20:07:51 No config file found! Counting on flags!
+2023/05/29 20:07:51 Job Finished!
+```
+
+Instead of flags, it is possible to use the config file:
+```
+./vault-utils restore -c config.yaml
+```
+## Installation
+
+From the [release page](https://github.com/ha36d/vault-utils/releases/), find the version suitable for your env, and run it shell.
+
+```bash
+  ./vault-utils
+```
 ## Contributing
 
 Contributions are always welcome!

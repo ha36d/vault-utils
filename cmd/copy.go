@@ -45,7 +45,7 @@ var copyCmd = &cobra.Command{
 
 		for engine, property := range resp.Data {
 			engineType := property.(map[string]interface{})
-			if engineType["type"] == "kv" && utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/")) {
+			if engineType["type"] == "kv" && (srcengine == "" || utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/"))) {
 				vaultutility.LoopTree(source, ctx, engine, "/", copySecret)
 			}
 		}
