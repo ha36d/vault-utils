@@ -89,13 +89,6 @@ Instead of flags, it is possible to use the config file:
 ```
 ./vault-utils backup -c config.yaml
 ```
-## Installation
-
-From the [release page](https://github.com/ha36d/vault-utils/releases/), find the version suitable for your env, and run it shell.
-
-```bash
-  ./vault-utils
-```
 
 ### Restore
 This can used for copy the kv data from one Vault to another:
