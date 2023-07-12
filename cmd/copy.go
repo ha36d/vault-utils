@@ -60,6 +60,7 @@ func copySecret(ctx context.Context, engine string, path string, secret string, 
 	dstaddr := viper.GetString("dstaddr")
 	dsttoken := viper.GetString("dsttoken")
 	dstengine := viper.GetString("dstengine")
+	engineinpath := viper.GetBool("engineinpath")
 	verbose = viper.GetBool("verbose")
 	destination, err := vaultutility.VaultClient(dstaddr, dsttoken)
 
@@ -69,6 +70,9 @@ func copySecret(ctx context.Context, engine string, path string, secret string, 
 
 	for key, value := range subkeys {
 
+		if engineinpath {
+			path = fmt.Sprintf("%s/%s", engine, path)
+		}
 		_, err := destination.Secrets.KvV2Write(ctx, fmt.Sprintf("%s%s", path, secret), schema.KvV2WriteRequest{
 			Data: map[string]any{
 				key: value,
@@ -88,6 +92,9 @@ func init() {
 	viper.BindPFlag("dsttoken", copyCmd.Flags().Lookup("dsttoken"))
 	copyCmd.Flags().StringP("dstengine", "f", "", "Destination vault kv engines to write to")
 	viper.BindPFlag("dstengine", copyCmd.Flags().Lookup("dstengine"))
+	copyCmd.PersistentFlags().BoolP("engineinpath", "z", false, "engine in path")
+	viper.BindPFlag("engineinpath", copyCmd.PersistentFlags().Lookup("engineinpath"))
+	viper.SetDefault("engineinpath", false)
 
 	rootCmd.AddCommand(copyCmd)
 }
