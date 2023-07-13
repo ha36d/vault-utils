@@ -34,16 +34,16 @@ Global Flags:
 Example:
 
 ```
-./vault-utils copy --addr "http://127.0.0.1:8200" --srtoken "someToken" --engine "kv,secret" --dstaddr "http://127.0.0.1:8202" --dsttoken "someToken" --dstengine "secret" -v
+./vault-utils copy --addr "http://127.0.0.1:8200" --token "someToken" --engine "kv,secret" --dstaddr "http://127.0.0.1:8202" --dsttoken "someToken" --dstengine "secret" -v
 2023/05/29 20:07:51 No config file found! Counting on flags!
 Using config:
 --- Configuration ---
-	srctoken = someToken
+	token = someToken
 	dsttoken = someToken
-	srcengine = kv,secret
+	engine = kv,secret
 	dstengine = secret
 	verbose = %!s(bool=true)
-	srcaddr = http://127.0.0.1:8200
+	addr = http://127.0.0.1:8200
 	dstaddr = http://127.0.0.1:8202
 ---
 2023/05/29 20:07:51 writing secret: secret//ss/ss
