@@ -21,6 +21,7 @@ Flags:
   -d, --dstaddr string     Destination vault address to write to
   -f, --dstengine string   Destination vault kv engines to write to
   -k, --dsttoken string    Destination vault token to write to
+  -z, --engineinpath       Add the name of the engine in the copied Path
   -h, --help               help for copy
 
 Global Flags:

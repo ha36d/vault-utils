@@ -24,25 +24,41 @@ func VaultClient(address string, token string) (*vault.Client, error) {
 	return client, err
 }
 
-func LoopTree(source *vault.Client, ctx context.Context, engine string, path string, f func(context.Context, string, string, string, map[string]interface{})) {
+func LoopTree(source *vault.Client, ctx context.Context, engine string, engineVersion string, path string, f func(context.Context, string, string, string, map[string]interface{})) {
 
 	res := strings.HasSuffix(path, "/")
 
 	if res {
-		keys, err := source.List(ctx, fmt.Sprintf("%s/metadata/%s", engine, path))
+		var keys *vault.Response[map[string]interface{}]
+		var err error
+		if engineVersion == "2" {
+			keys, err = source.List(ctx, fmt.Sprintf("%s/metadata/%s", engine, path))
+		} else {
+			keys, err = source.List(ctx, fmt.Sprintf("%s/%s", engine, path))
+		}
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		for _, key := range Keys(keys.Data) {
 			res := strings.HasSuffix(key, "/")
 			if res {
-				LoopTree(source, ctx, engine, fmt.Sprintf("%s%s", path, key), f)
+				LoopTree(source, ctx, engine, engineVersion, fmt.Sprintf("%s%s", path, key), f)
 			} else {
-				subkeys, err := source.Secrets.KvV2Read(ctx, fmt.Sprintf("%s%s", path, key), vault.WithMountPath(engine))
-				if err != nil {
-					log.Fatal(err)
+				if engineVersion == "1" {
+					subkeys, err := source.Secrets.KvV1Read(ctx, fmt.Sprintf("%s%s", path, key), vault.WithMountPath(engine))
+					if err != nil {
+						log.Fatal(err)
+					}
+					f(ctx, engine, path, key, subkeys.Data)
+				} else {
+					subkeys, err := source.Secrets.KvV2Read(ctx, fmt.Sprintf("%s%s", path, key), vault.WithMountPath(engine))
+					if err != nil {
+						log.Fatal(err)
+					}
+					f(ctx, engine, path, key, subkeys.Data.Data)
 				}
-				f(ctx, engine, path, key, subkeys.Data.Data)
+
 			}
 		}
 	}

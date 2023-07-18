@@ -43,10 +43,16 @@ var copyCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		var engineVersion string
+
 		for engine, property := range resp.Data {
-			engineType := property.(map[string]interface{})
-			if engineType["type"] == "kv" && (srcengine == "" || utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/"))) {
-				vaultutility.LoopTree(source, ctx, engine, "/", copySecret)
+			engineProperty := property.(map[string]interface{})
+			if engineProperty["options"] != nil {
+				engineOption := engineProperty["options"].(map[string]interface{})
+				engineVersion = engineOption["version"].(string)
+			}
+			if engineProperty["type"] == "kv" && (srcengine == "" || utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/"))) {
+				vaultutility.LoopTree(source, ctx, engine, engineVersion, "/", copySecret)
 			}
 		}
 
@@ -62,25 +68,30 @@ func copySecret(ctx context.Context, engine string, path string, secret string, 
 	dstengine := viper.GetString("dstengine")
 	engineinpath := viper.GetBool("engineinpath")
 	verbose = viper.GetBool("verbose")
-	destination, err := vaultutility.VaultClient(dstaddr, dsttoken)
 
+	destination, err := vaultutility.VaultClient(dstaddr, dsttoken)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for key, value := range subkeys {
+	content := make(map[string]any)
 
-		if engineinpath {
-			path = fmt.Sprintf("%s/%s", engine, path)
-		}
-		_, err := destination.Secrets.KvV2Write(ctx, fmt.Sprintf("%s%s", path, secret), schema.KvV2WriteRequest{
-			Data: map[string]any{
-				key: value,
-			},
-		}, vault.WithMountPath(dstengine))
-		if err != nil {
-			log.Fatal(err)
-		}
+	for key, value := range subkeys {
+		content[key] = value
+	}
+
+	var newpath string
+
+	if engineinpath {
+		newpath = fmt.Sprintf("%s/%s", engine, path)
+	} else {
+		newpath = path
+	}
+	_, err = destination.Secrets.KvV2Write(ctx, fmt.Sprintf("%s%s", newpath, secret), schema.KvV2WriteRequest{
+		Data: content,
+	}, vault.WithMountPath(dstengine))
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 

@@ -37,11 +37,12 @@ func TestVaultClient(t *testing.T) {
 
 func TestLoopTree(t *testing.T) {
 	type args struct {
-		source *vault.Client
-		ctx    context.Context
-		engine string
-		path   string
-		f      func(context.Context, string, string, string, map[string]interface{})
+		source        *vault.Client
+		ctx           context.Context
+		engine        string
+		engineVersion string
+		path          string
+		f             func(context.Context, string, string, string, map[string]interface{})
 	}
 	tests := []struct {
 		name string
@@ -51,7 +52,7 @@ func TestLoopTree(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			LoopTree(tt.args.source, tt.args.ctx, tt.args.engine, tt.args.path, tt.args.f)
+			LoopTree(tt.args.source, tt.args.ctx, tt.args.engine, tt.args.engineVersion, tt.args.path, tt.args.f)
 		})
 	}
 }
