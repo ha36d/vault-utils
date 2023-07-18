@@ -58,11 +58,16 @@ var backupCmd = &cobra.Command{
 		}
 		defer os.RemoveAll(fmt.Sprintf("%s/%s", osPath, "vault-backup"))
 
-		for engine, property := range resp.Data {
-			engineType := property.(map[string]interface{})
+		var engineVersion string
 
-			if engineType["type"] == "kv" && (srcengine == "" || utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/"))) {
-				vaultutility.LoopTree(source, ctx, engine, "/", saveSecretToFile)
+		for engine, property := range resp.Data {
+			engineProperty := property.(map[string]interface{})
+			if engineProperty["options"] != nil {
+				engineOption := engineProperty["options"].(map[string]interface{})
+				engineVersion = engineOption["version"].(string)
+			}
+			if engineProperty["type"] == "kv" && (srcengine == "" || utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/"))) {
+				vaultutility.LoopTree(source, ctx, engine, engineVersion, "/", copySecret)
 			}
 		}
 
