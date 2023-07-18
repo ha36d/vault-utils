@@ -43,15 +43,18 @@ var copyCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		var engineVersion string
+		engineVersion := ""
+		versions := []string{"1", "2"}
 
 		for engine, property := range resp.Data {
 			engineProperty := property.(map[string]interface{})
 			if engineProperty["options"] != nil {
 				engineOption := engineProperty["options"].(map[string]interface{})
-				engineVersion = engineOption["version"].(string)
+				if engineOption["version"] != nil {
+					engineVersion = engineOption["version"].(string)
+				}
 			}
-			if engineProperty["type"] == "kv" && (srcengine == "" || utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/"))) {
+			if utils.Contains(versions, engineVersion) && engineProperty["type"] == "kv" && (srcengine == "" || utils.Contains(strings.Split(srcengine, ","), strings.TrimSuffix(engine, "/"))) {
 				vaultutility.LoopTree(source, ctx, engine, engineVersion, "/", copySecret)
 			}
 		}

@@ -62,9 +62,18 @@ var restoreCmd = &cobra.Command{
 			log.Fatalf("unable to untar the file: %v", err)
 		}
 
+		engineVersion := ""
+		versions := []string{"1", "2"}
+
 		for engine, property := range resp.Data {
-			engineType := property.(map[string]interface{})
-			if engineType["type"] == "kv" && (dstengine == "" || utils.Contains(strings.Split(dstengine, ","), strings.TrimSuffix(engine, "/"))) {
+			engineProperty := property.(map[string]interface{})
+			if engineProperty["options"] != nil {
+				engineOption := engineProperty["options"].(map[string]interface{})
+				if engineOption["version"] != nil {
+					engineVersion = engineOption["version"].(string)
+				}
+			}
+			if utils.Contains(versions, engineVersion) && engineProperty["type"] == "kv" && (dstengine == "" || utils.Contains(strings.Split(dstengine, ","), strings.TrimSuffix(engine, "/"))) {
 				saveSecretToKv(destination, ctx, engine)
 			}
 		}
