@@ -62,10 +62,10 @@ var restoreCmd = &cobra.Command{
 			log.Fatalf("unable to untar the file: %v", err)
 		}
 
-		engineVersion := ""
 		versions := []string{"1", "2"}
 
 		for engine, property := range resp.Data {
+			engineVersion := "1"
 			engineProperty := property.(map[string]interface{})
 			if engineProperty["options"] != nil {
 				engineOption := engineProperty["options"].(map[string]interface{})

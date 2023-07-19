@@ -58,10 +58,10 @@ var backupCmd = &cobra.Command{
 		}
 		defer os.RemoveAll(fmt.Sprintf("%s/%s", osPath, "vault-backup"))
 
-		engineVersion := ""
 		versions := []string{"1", "2"}
 
 		for engine, property := range resp.Data {
+			engineVersion := "1"
 			engineProperty := property.(map[string]interface{})
 			if engineProperty["options"] != nil {
 				engineOption := engineProperty["options"].(map[string]interface{})
