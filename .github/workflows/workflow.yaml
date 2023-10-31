@@ -28,7 +28,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.18.0' # The Go version to download (if necessary) and use.
+        go-version: '1.21.0' # The Go version to download (if necessary) and use.
     
     # Install all the dependencies
     - name: Install dependencies
@@ -49,4 +49,15 @@ jobs:
     
     # Run testing on the code
     - name: Run testing
-      run: cd cmd && go test -v
+      run: go test ./... -v
+
+    # Run testing coverage on the code
+    - name: Run Coverage
+      run: go test ./... -coverprofile=coverage.out
+
+    # Artifact
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-coverage-report
+        path: ./coverage.out

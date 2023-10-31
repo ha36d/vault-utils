@@ -1,6 +1,6 @@
 module github.com/ha36d/vault-utils
 
-go 1.18
+go 1.21
 
 require github.com/spf13/viper v1.15.0
 
